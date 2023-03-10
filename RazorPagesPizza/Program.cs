@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RazorPagesPizza.Areas.Identity.Data;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using RazorPagesPizza.Services;
+using QRCoder;
 
 var builder = WebApplication.CreateBuilder(args);
 var connectionString = builder.Configuration.GetConnectionString("RazorPagesPizzaAuthConnection");
@@ -12,8 +13,13 @@ var connectionString = builder.Configuration.GetConnectionString("RazorPagesPizz
     .AddEntityFrameworkStores<RazorPagesPizzaAuth>();
 
 // Add services to the container.
-builder.Services.AddRazorPages();
+builder.Services.AddRazorPages(options => options.Conventions.AuthorizePage("/AdminsOnly", "Admin")); //alternitive to [Authorize(Policy = "Admin")]
 builder.Services.AddTransient<IEmailSender, EmailSender>();
+builder.Services.AddSingleton(new QRCodeService(new QRCodeGenerator()));
+builder.Services.AddAuthorization(options =>
+    options.AddPolicy("Admin", policy =>
+        policy.RequireAuthenticatedUser()
+            .RequireClaim("IsAdmin", bool.TrueString)));
 
 var app = builder.Build();
 
